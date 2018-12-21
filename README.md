@@ -11,6 +11,7 @@ kotka.consumer(topic = topic, threads = 8, messageClass = Message::class) { mess
     //do something with message
 }
 
+// Send a message on the topic
 kotka.send(topic = topic, message = Message(...)))
 ```
 
