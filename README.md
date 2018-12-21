@@ -13,7 +13,7 @@ dependencies {
 }
 ```
 
-## Maven dependencies
+## Maven dependency
 ```
 <repositories>
     <repository>
@@ -22,12 +22,13 @@ dependencies {
     </repository>
 </repositories>
     
-    ...
-<dependency>
-    <groupId>com.github.blueanvil</groupId>
-    <artifactId>kotka</artifactId>
-    <version>1.0.1</version>
-</dependency>
+<dependencies>
+    <dependency>
+        <groupId>com.github.blueanvil</groupId>
+        <artifactId>kotka</artifactId>
+        <version>1.0.1</version>
+    </dependency>
+</dependencies>
 ```
 
 ## Standard flow
