@@ -1,19 +1,7 @@
 # kotka
 A simple and thin Kotlin wrapper for Kafka
 
-# Using with Gradle
-
-```
-repositories {
-    maven { url "https://jitpack.io" }
-}
-
-dependencies {
-    compile 'com.github.blueanvil:kotka:1.0.0'
-}
-```
-
-## Example
+# Example
 ```
 val kotka = Kotka("localhost:59099", 1)
 val topic = "topic1"
@@ -24,4 +12,16 @@ kotka.consumer(topic, 1, Message::class) { message ->
 }
 
 kotka.send(topic, Message(...)))
+```
+
+# Gradle dependency
+
+```
+repositories {
+    maven { url "https://jitpack.io" }
+}
+
+dependencies {
+    compile 'com.github.blueanvil:kotka:1.0.0'
+}
 ```
