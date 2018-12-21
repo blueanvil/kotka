@@ -2,7 +2,7 @@
 A simple and thin Kotlin wrapper for Kafka
 
 # Example
-```
+```kotlin
 val kotka = Kotka(kafkaServers = "localhost:59099", replicationFactor = 1)
 val topic = "topic1"
 
