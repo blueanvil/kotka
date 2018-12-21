@@ -1,17 +1,20 @@
 # kotka
 A simple and thin Kotlin wrapper for Kafka
 
-# Example
+# Main component
 ```kotlin
 val kotka = Kotka(kafkaServers = "localhost:59099", replicationFactor = 1)
-val topic = "topic1"
+```
 
-// Setup a consumer
-kotka.consumer(topic = topic, threads = 8, messageClass = Message::class) { message ->
+# Standard consumer setup
+```kotlin
+kotka.consumer(topic = "topic1", threads = 8, messageClass = Message::class) { message ->
     // process message
 }
+```
 
-// Send a message on the topic
+# Send a message on a topic
+```kotlin
 kotka.send(topic = topic, message = Message(...)))
 ```
 
