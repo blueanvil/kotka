@@ -30,7 +30,7 @@ kotka.send(topic = topic, message = Message(...)))
 
 ## Using `@KotkaMessage`
 ```kotlin
-// Annotated class where topic and thread count is specified
+// Annotated class where topic and thread count are specified
 @KotkaMessage(topic = "test-annotated-message", threads = 8)
 data class AnnotatedMessage(val name: String)
 
