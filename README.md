@@ -3,15 +3,15 @@ A simple and thin Kotlin wrapper for Kafka
 
 # Example
 ```
-val kotka = Kotka("localhost:59099", 1)
+val kotka = Kotka(kafkaServers = "localhost:59099", replicationFactor = 1)
 val topic = "topic1"
 
 // Setup a consumer
-kotka.consumer(topic, 1, Message::class) { message ->
+kotka.consumer(topic = topic, threads = 8, messageClass = Message::class) { message ->
     //do something with message
 }
 
-kotka.send(topic, Message(...)))
+kotka.send(topic = topic, message = Message(...)))
 ```
 
 # Gradle dependency
