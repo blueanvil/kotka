@@ -1,6 +1,8 @@
 package com.blueanvil.kotka
 
+import org.junit.Assert
 import org.junit.Test
+import java.time.Duration
 import java.util.*
 import kotlin.collections.ArrayList
 
@@ -9,7 +11,12 @@ import kotlin.collections.ArrayList
  */
 class KotkaTest {
 
-    val kotka = Kotka(kafkaServers = "localhost:59099", replicationFactor = 1)
+    val kotka = Kotka(kafkaServers = "localhost:59099",
+            partitionCount = 64,
+            replicationFactor = 1,
+            consumerProps = mapOf("max.poll.records" to "1").toProperties(),
+            pollTimeout = Duration.ofMillis(100))
+
 
     @Test
     fun simpleSendAndConsumer() {
@@ -20,19 +27,15 @@ class KotkaTest {
             messages.add(message)
         }
 
-        kotka.send(topic = topic, message = Message("Jacky Chan", 55, listOf("The Dragon", "Jack E Chan")))
+        kotka.send(topic = topic, message = Message("Jackie Chan", 55, listOf("The Dragon", "Jack E Chan")))
 
-        wait(5, 500, "Message was not consumed") {
-            if (messages.size == 0) {
-                false
-            } else {
-                val first = messages[0]
-                first.name == "Jacky Chan"
+        wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
+        val first = messages.first()
+        Assert.assertTrue(
+                first.name == "Jackie Chan"
                         && first.age == 55
                         && first.aliases.contains("The Dragon")
-                        && first.aliases.contains("Jack E Chan")
-            }
-        }
+                        && first.aliases.contains("Jack E Chan"))
     }
 
     @Test
@@ -45,9 +48,8 @@ class KotkaTest {
 
         kotka.send(AnnotatedMessage("Dolph Lundgren"))
 
-        wait(5, 500, "Message was not consumed") {
-            messages.size == 1 && messages[0].name == "Dolph Lundgren"
-        }
+        wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
+        Assert.assertTrue(messages[0].name == "Dolph Lundgren")
     }
 
     @Test(expected = IllegalArgumentException::class)
@@ -59,5 +61,65 @@ class KotkaTest {
     @Test(expected = IllegalArgumentException::class)
     fun expectProducerError() {
         kotka.send(Message("Dolph Lundgren", 1, listOf("none")))
+    }
+
+    @Test
+    fun parallelism() {
+        val threads = Collections.synchronizedList(ArrayList<String>())
+        val topic = uuid()
+
+        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class) { message ->
+            threads.add(Thread.currentThread().name)
+            Thread.sleep(1000)
+        }
+
+        repeat(10) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
+
+        wait(15, 500, "Consumer hasn't finished") { threads.size == 10 }
+        for (i in 1..4) {
+            Assert.assertTrue(threads.contains("kotka.$topic.$i"))
+        }
+    }
+
+    @Test
+    fun annotatedParallelism() {
+        val threads = Collections.synchronizedList(ArrayList<String>())
+
+        kotka.consumer(AnnotatedMessageParallel::class) { message ->
+            threads.add(Thread.currentThread().name)
+            Thread.sleep(1000)
+        }
+
+        repeat(10) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
+
+        wait(15, 500, "Consumer hasn't finished") { threads.size == 10 }
+        for (i in 1..4) {
+            Assert.assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
+        }
+    }
+
+    @Test
+    fun pubSub() {
+        val messages = Collections.synchronizedList(ArrayList<Message>())
+        val topic = uuid()
+
+        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class, pubSub = true) { message ->
+            messages.add(message)
+        }
+
+        kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy")))
+        wait(15, 500, "Consumer hasn't finished") { messages.size == 4 }
+    }
+
+    @Test
+    fun annotatedPubSub() {
+        val messages = Collections.synchronizedList(ArrayList<AnnotatedMessagePubSub>())
+
+        kotka.consumer(AnnotatedMessagePubSub::class) { message ->
+            messages.add(message)
+        }
+
+        kotka.send(AnnotatedMessagePubSub("Sunshine"))
+        wait(15, 500, "Consumer hasn't finished") { messages.size == 4 }
     }
 }

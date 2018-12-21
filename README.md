@@ -60,3 +60,20 @@ kotka.consumer(AnnotatedMessage::class) { message ->
 // Similarly, sending a message doesn't require a topic anymore
 kotka.send(AnnotatedMessage("..."))
 ```
+
+## Pub-Sub Consumer
+```kotlin
+kotka.consumer(topic = topic, threads = 4, messageClass = Message::class, pubSub = true) { message ->
+    // process message
+}
+```
+or, if using `@KotkaMessage`:
+```kotlin
+@KotkaMessage(topic = "test-annotated-pubsub-message", threads = 4, pubSub = true)
+data class AnnotatedMessagePubSub(val name: String)
+
+
+kotka.consumer(AnnotatedMessagePubSub::class) { message ->
+    //process message
+}
+```

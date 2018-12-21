@@ -19,30 +19,16 @@ import kotlin.reflect.KClass
 class Consumer<T : Any>(private val kafkaServers: String,
                         private val topic: String,
                         private val threads: Int,
-                        private val messgeClass: KClass<T>,
+                        private val messageClass: KClass<T>,
                         private val consumerProps: Properties? = null,
-                        private val messageDeserialiser: (String) -> T = FromJson(messgeClass),
+                        private val messageDeserialiser: (String) -> T = FromJson(messageClass),
                         private val pubSub: Boolean = false,
-                        private val pollTimeout: Duration = Duration.ofSeconds(1)) {
+                        private val pollTimeout: Duration = Duration.ofMillis(500)) {
 
     @Volatile
     private var stopped: Boolean = false
 
     fun run(messageHandler: (T) -> Unit) {
-        val groupId = if (pubSub) "$topic.${uuid()}" else "$topic.competing-consumer"
-
-        val allProps = Properties()
-        if (consumerProps != null) {
-            allProps.putAll(consumerProps)
-        }
-        allProps[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaServers
-        allProps[ConsumerConfig.GROUP_ID_CONFIG] = groupId
-        allProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
-        allProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
-        allProps[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = "true"
-        allProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
-
-
         val threadCount = AtomicInteger(1)
         val threadPool = Executors.newFixedThreadPool(threads) { runnable ->
             val thread = Thread(Thread.currentThread().threadGroup, runnable, "kotka.$topic.${threadCount.getAndIncrement()}", 0)
@@ -51,7 +37,11 @@ class Consumer<T : Any>(private val kafkaServers: String,
         }
 
         val futures = ArrayList<Future<*>>()
+
         repeat(threads) {
+            val groupId = if (pubSub) "$topic.${uuid()}" else "$topic.competing-consumer"
+            val allProps = allProps(groupId)
+
             val kafkaConsumer = KafkaConsumer<String, String>(allProps)
             kafkaConsumer.subscribe(listOf(topic))
             val future = threadPool.submit {
@@ -66,6 +56,20 @@ class Consumer<T : Any>(private val kafkaServers: String,
                 futures.forEach { it.get() }
             }
         })
+    }
+
+    private fun allProps(groupId: String): Properties {
+        val allProps = Properties()
+        if (consumerProps != null) {
+            allProps.putAll(consumerProps)
+        }
+        allProps[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaServers
+        allProps[ConsumerConfig.GROUP_ID_CONFIG] = groupId
+        allProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
+        allProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
+        allProps[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = "true"
+        allProps[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+        return allProps
     }
 
     private fun runConsumer(kafkaConsumer: KafkaConsumer<String, String>, groupId: String, messageHandler: (T) -> Unit) {

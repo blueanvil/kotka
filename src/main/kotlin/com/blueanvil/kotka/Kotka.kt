@@ -3,6 +3,7 @@ package com.blueanvil.kotka
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.slf4j.LoggerFactory
+import java.time.Duration
 import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.full.findAnnotation
@@ -13,9 +14,12 @@ import kotlin.reflect.full.findAnnotation
 class Kotka(private val kafkaServers: String,
             private val replicationFactor: Short,
             private val partitionCount: Int = 256,
+            private val consumerProps: Properties? = null,
+            producerProps: Properties? = null,
+            private val pollTimeout: Duration = Duration.ofMillis(500),
             messageSerializer: (Any) -> String = ToJson()) {
 
-    private val producer = Producer(kafkaServers, messageSerializer)
+    private val producer = Producer(kafkaServers, messageSerializer, producerProps)
 
     fun <T : Any> send(message: T) {
         val annotation = message::class.findAnnotation<KotkaMessage>()
@@ -31,15 +35,23 @@ class Kotka(private val kafkaServers: String,
                            messageHandler: (T) -> Unit) {
         val annotation = messageClass.findAnnotation<KotkaMessage>()
                 ?: throw IllegalArgumentException("Message class $messageClass is not annotated with ${KotkaMessage::class}")
-        consumer(annotation.topic, annotation.threads, messageClass, messageHandler)
+        consumer(annotation.topic, annotation.threads, messageClass, annotation.pubSub, messageHandler)
     }
 
     fun <T : Any> consumer(topic: String,
                            threads: Int,
                            messageClass: KClass<T>,
+                           pubSub: Boolean = false,
                            messageHandler: (T) -> Unit) {
         createTopic(topic)
-        Consumer(kafkaServers, topic, threads, messageClass).run(messageHandler)
+        Consumer(kafkaServers = kafkaServers,
+                topic = topic,
+                threads = threads,
+                messageClass = messageClass,
+                consumerProps = consumerProps,
+                messageDeserialiser = FromJson(messageClass),
+                pubSub = pubSub,
+                pollTimeout = pollTimeout).run(messageHandler)
     }
 
     fun createTopic(topic: String) {
