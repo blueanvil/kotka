@@ -13,7 +13,7 @@ dependencies {
 }
 ```
 
-## Maven dependencies
+## Maven dependency
 ```
 <repositories>
     <repository>
