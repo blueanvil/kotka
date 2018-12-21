@@ -9,8 +9,25 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.blueanvil:kotka:1.0.0'
+    compile 'com.github.blueanvil:kotka:1.0.1'
 }
+```
+
+## Maven dependencies
+```
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+    
+    ...
+<dependency>
+    <groupId>com.github.blueanvil</groupId>
+    <artifactId>kotka</artifactId>
+    <version>1.0.1</version>
+</dependency>
 ```
 
 ## Standard flow
@@ -34,11 +51,12 @@ kotka.send(topic = topic, message = Message(...)))
 @KotkaMessage(topic = "test-annotated-message", threads = 8)
 data class AnnotatedMessage(val name: String)
 
-// Consumer only requires annotated class
+
+// Consumer only requires an instance of a message annotated with @KotkaMessage
 kotka.consumer(AnnotatedMessage::class) { message ->
      messages.add(message)
 }
 
-// Sending a message doesn't require specifying a topic
+// Similarly, sending a message doesn't require a topic anymore
 kotka.send(AnnotatedMessage("..."))
 ```
