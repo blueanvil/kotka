@@ -74,7 +74,7 @@ class KotkaTest {
 
         repeat(20) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
 
-        wait(5, 500, "Consumer hasn't finished") { threads.size == 20 }
+        wait(15, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
             Assert.assertTrue(threads.contains("kotka.$topic.$i"))
         }
@@ -90,7 +90,7 @@ class KotkaTest {
 
         repeat(20) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
 
-        wait(5, 500, "Consumer hasn't finished") { threads.size == 20 }
+        wait(15, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
             Assert.assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
         }
