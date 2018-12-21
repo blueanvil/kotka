@@ -5,6 +5,7 @@ import org.apache.kafka.clients.admin.NewTopic
 import org.slf4j.LoggerFactory
 import java.util.*
 import kotlin.reflect.KClass
+import kotlin.reflect.full.findAnnotation
 
 /**
  * @author Cosmin Marginean
@@ -16,8 +17,21 @@ class Kotka(private val kafkaServers: String,
 
     private val producer = Producer(kafkaServers, messageSerializer)
 
+    fun <T : Any> send(message: T) {
+        val annotation = message::class.findAnnotation<KotkaMessage>()
+                ?: throw IllegalArgumentException("Message class $message::class is not annotated with ${KotkaMessage::class}")
+        producer.send(annotation.topic, message)
+    }
+
     fun <T : Any> send(topic: String, message: T) {
         producer.send(topic, message)
+    }
+
+    fun <T : Any> consumer(messageClass: KClass<T>,
+                           messageHandler: (T) -> Unit) {
+        val annotation = messageClass.findAnnotation<KotkaMessage>()
+                ?: throw IllegalArgumentException("Message class $messageClass is not annotated with ${KotkaMessage::class}")
+        consumer(annotation.topic, annotation.threads, messageClass, messageHandler)
     }
 
     fun <T : Any> consumer(topic: String,
