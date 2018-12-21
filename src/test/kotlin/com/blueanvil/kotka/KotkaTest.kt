@@ -54,7 +54,7 @@ class KotkaTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun expectConsumerError() {
-        kotka.consumer(Message::class) { message ->
+        kotka.consumer(Message::class) {
         }
     }
 
@@ -68,14 +68,13 @@ class KotkaTest {
         val threads = Collections.synchronizedList(ArrayList<String>())
         val topic = uuid()
 
-        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class) { message ->
+        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class) {
             threads.add(Thread.currentThread().name)
-            Thread.sleep(1000)
         }
 
-        repeat(10) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
+        repeat(20) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
 
-        wait(15, 500, "Consumer hasn't finished") { threads.size == 10 }
+        wait(5, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
             Assert.assertTrue(threads.contains("kotka.$topic.$i"))
         }
@@ -85,14 +84,13 @@ class KotkaTest {
     fun annotatedParallelism() {
         val threads = Collections.synchronizedList(ArrayList<String>())
 
-        kotka.consumer(AnnotatedMessageParallel::class) { message ->
+        kotka.consumer(AnnotatedMessageParallel::class) {
             threads.add(Thread.currentThread().name)
-            Thread.sleep(1000)
         }
 
-        repeat(10) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
+        repeat(20) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
 
-        wait(15, 500, "Consumer hasn't finished") { threads.size == 10 }
+        wait(5, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
             Assert.assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
         }
