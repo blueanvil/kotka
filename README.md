@@ -9,7 +9,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.blueanvil:kotka:1.0.1'
+    compile 'com.github.blueanvil:kotka:1.0.2'
 }
 ```
 
@@ -26,7 +26,7 @@ dependencies {
     <dependency>
         <groupId>com.github.blueanvil</groupId>
         <artifactId>kotka</artifactId>
-        <version>1.0.1</version>
+        <version>1.0.2</version>
     </dependency>
 </dependencies>
 ```
