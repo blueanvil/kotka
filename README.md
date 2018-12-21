@@ -8,7 +8,7 @@ val topic = "topic1"
 
 // Setup a consumer
 kotka.consumer(topic = topic, threads = 8, messageClass = Message::class) { message ->
-    //do something with message
+    // process message
 }
 
 // Send a message on the topic
