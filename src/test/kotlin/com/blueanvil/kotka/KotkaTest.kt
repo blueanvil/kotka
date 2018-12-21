@@ -15,6 +15,7 @@ class KotkaTest {
             partitionCount = 64,
             replicationFactor = 1,
             consumerProps = mapOf("max.poll.records" to "1").toProperties(),
+            producerProps = mapOf("batch.size" to "1").toProperties(),
             pollTimeout = Duration.ofMillis(100))
 
 
@@ -70,6 +71,7 @@ class KotkaTest {
 
         kotka.consumer(topic = topic, threads = 4, messageClass = Message::class) {
             threads.add(Thread.currentThread().name)
+            Thread.sleep(500)
         }
 
         repeat(20) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
@@ -86,6 +88,7 @@ class KotkaTest {
 
         kotka.consumer(AnnotatedMessageParallel::class) {
             threads.add(Thread.currentThread().name)
+            Thread.sleep(500)
         }
 
         repeat(20) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
