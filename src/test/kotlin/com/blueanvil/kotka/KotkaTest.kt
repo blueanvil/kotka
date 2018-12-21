@@ -23,10 +23,15 @@ class KotkaTest {
         kotka.send(topic = topic, message = Message("Jacky Chan", 55, listOf("The Dragon", "Jack E Chan")))
 
         wait(5, 500, "Message was not consumed") {
-            messages.size == 1 && messages[0].name == "Jacky Chan"
-                    && messages[0].age == 55
-                    && messages[0].aliases.contains("The Dragon")
-                    && messages[0].aliases.contains("Jack E Chan")
+            if (messages.size == 0) {
+                false
+            } else {
+                val first = messages[0]
+                first.name == "Jacky Chan"
+                        && first.age == 55
+                        && first.aliases.contains("The Dragon")
+                        && first.aliases.contains("Jack E Chan")
+            }
         }
     }
 
