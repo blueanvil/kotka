@@ -1,5 +1,5 @@
 ext {
-kafkaVersion = '2.1.0'
+    kafkaVersion = '2.1.0'
     jacksonVersion = '2.9.7'
     kotlinVersion = '1.3.11'
     slf4jVersion = '1.7.25'

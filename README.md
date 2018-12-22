@@ -1,7 +1,7 @@
 # kotka
-A simple and thin Kotlin wrapper for Kafka
+A thin Kotlin wrapper for Kafka with a simple and clean API, and very few dependencies: Kafka, Jackson and Slf4J
 
-## Gradle dependency
+## Dependency
 
 ```
 repositories {
@@ -11,24 +11,6 @@ repositories {
 dependencies {
     compile 'com.github.blueanvil:kotka:1.0.2'
 }
-```
-
-## Maven dependency
-```
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
-    
-<dependencies>
-    <dependency>
-        <groupId>com.github.blueanvil</groupId>
-        <artifactId>kotka</artifactId>
-        <version>1.0.2</version>
-    </dependency>
-</dependencies>
 ```
 
 ## Standard flow
