@@ -30,17 +30,17 @@ kotka.send(topic = topic, message = Message(...)))
 
 ## Using `@KotkaMessage`
 ```kotlin
-// Annotated class where topic and thread count are specified
+// Annotated class where topic and thread count can be specified
 @KotkaMessage(topic = "test-annotated-message", threads = 8)
 data class AnnotatedMessage(val name: String)
 
 
 // Consumer only requires an instance of a message annotated with @KotkaMessage
 kotka.consumer(AnnotatedMessage::class) { message ->
-     messages.add(message)
+     // process message
 }
 
-// Similarly, sending a message doesn't require a topic anymore
+// Similarly, sending a message won't require a topic as it's being read from @KotkaMessage.topic
 kotka.send(AnnotatedMessage("..."))
 ```
 
