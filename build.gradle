@@ -60,6 +60,10 @@ dependencies {
     testCompile "org.slf4j:slf4j-log4j12:$slf4jVersion"
 }
 
+jacoco {
+    reportsDir = file("etc/code-coverage")
+}
+
 jacocoTestReport {
     additionalSourceDirs = files(sourceSets.main.allSource.srcDirs)
     sourceDirectories = files(sourceSets.main.allSource.srcDirs)
