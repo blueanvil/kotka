@@ -1,12 +1,13 @@
 package com.blueanvil.kotka
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.util.*
 import kotlin.reflect.KClass
-import kotlin.reflect.full.findAnnotation
 
 /**
  * @author Cosmin Marginean
@@ -17,25 +18,28 @@ class Kotka(private val kafkaServers: String,
             private val consumerProps: Properties? = null,
             producerProps: Properties? = null,
             private val pollTimeout: Duration = Duration.ofMillis(500),
-            messageSerializer: (Any) -> String = ToJson()) {
+            private val objectMapper: ObjectMapper = jacksonObjectMapper()) {
 
-    private val producer = Producer(kafkaServers, messageSerializer, producerProps)
+    private val producer = Producer(kafkaServers, objectMapper, producerProps)
 
     fun <T : Any> send(message: T) {
-        val annotation = message::class.findAnnotation<KotkaMessage>()
-                ?: throw IllegalArgumentException("Message class $message::class is not annotated with ${KotkaMessage::class}")
+        val annotation = annotation(message::class)
         producer.send(annotation.topic, message)
+    }
+
+    fun <T : Any> consumer(messageClass: KClass<T>, messageHandler: (T) -> Unit) {
+        val annotation = annotation(messageClass)
+        consumer(annotation.topic, annotation.threads, messageClass, annotation.pubSub, messageHandler)
+    }
+
+    private fun <T : Any> annotation(messageClass: KClass<T>): KotkaMessage {
+        val annotation = annotation(messageClass, KotkaMessage::class)
+                ?: throw IllegalArgumentException("Message class $messageClass::class is not annotated with ${KotkaMessage::class}")
+        return annotation
     }
 
     fun <T : Any> send(topic: String, message: T) {
         producer.send(topic, message)
-    }
-
-    fun <T : Any> consumer(messageClass: KClass<T>,
-                           messageHandler: (T) -> Unit) {
-        val annotation = messageClass.findAnnotation<KotkaMessage>()
-                ?: throw IllegalArgumentException("Message class $messageClass is not annotated with ${KotkaMessage::class}")
-        consumer(annotation.topic, annotation.threads, messageClass, annotation.pubSub, messageHandler)
     }
 
     fun <T : Any> consumer(topic: String,
@@ -49,7 +53,7 @@ class Kotka(private val kafkaServers: String,
                 threads = threads,
                 messageClass = messageClass,
                 consumerProps = consumerProps,
-                messageDeserialiser = FromJson(messageClass),
+                objectMapper = objectMapper,
                 pubSub = pubSub,
                 pollTimeout = pollTimeout).run(messageHandler)
     }

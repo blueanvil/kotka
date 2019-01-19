@@ -2,6 +2,8 @@ package com.blueanvil.kotka
 
 import java.time.Duration
 import java.util.*
+import kotlin.reflect.KClass
+import kotlin.reflect.full.allSuperclasses
 
 /**
  * @author Cosmin Marginean
@@ -24,4 +26,19 @@ fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition: () -> Bo
 
 fun uuid(): String {
     return UUID.randomUUID().toString().toLowerCase().replace("-".toRegex(), "")
+}
+
+fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? {
+    val annotation = cls.annotations.find { it.annotationClass == annotationClass }
+    if (annotation != null) {
+        return annotation as T
+    }
+
+    cls.allSuperclasses.forEach {
+        val parentAnnotation = it.annotations.find { a -> a.annotationClass == annotationClass }
+        if (parentAnnotation != null) {
+            return parentAnnotation as T
+        }
+    }
+    return null
 }

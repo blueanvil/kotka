@@ -1,5 +1,7 @@
 package com.blueanvil.kotka
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -9,9 +11,9 @@ import java.util.*
 /**
  * @author Cosmin Marginean
  */
-class Producer<T : Any>(kafkaServers: String,
-                        val messageSerializer: (T) -> String = ToJson(),
-                        val producerProps: Properties? = null) {
+class Producer(kafkaServers: String,
+               private val objectMapper: ObjectMapper = jacksonObjectMapper(),
+               producerProps: Properties? = null) {
 
     val producer: KafkaProducer<String, String>
 
@@ -28,8 +30,8 @@ class Producer<T : Any>(kafkaServers: String,
         producer = KafkaProducer(allProps)
     }
 
-    fun send(topic: String, message: T) {
-        val msgString = messageSerializer(message)
+    fun send(topic: String, message: Any) {
+        val msgString = objectMapper.writeValueAsString(message)
         producer.send(ProducerRecord<String, String>(topic, uuid(), msgString))
     }
 }

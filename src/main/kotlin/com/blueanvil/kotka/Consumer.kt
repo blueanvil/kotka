@@ -1,5 +1,7 @@
 package com.blueanvil.kotka
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -21,7 +23,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
                         private val threads: Int,
                         private val messageClass: KClass<T>,
                         private val consumerProps: Properties? = null,
-                        private val messageDeserialiser: (String) -> T = FromJson(messageClass),
+                        private val objectMapper: ObjectMapper,
                         private val pubSub: Boolean = false,
                         private val pollTimeout: Duration = Duration.ofMillis(500)) {
 
@@ -93,7 +95,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
 
             val msgStr = record.value()
             try {
-                messageHandler(messageDeserialiser(msgStr))
+                messageHandler(objectMapper.readValue(msgStr, messageClass.javaObjectType))
             } catch (t: Throwable) {
                 log.error("(topic) Error handling message : $msgStr", t)
             }
