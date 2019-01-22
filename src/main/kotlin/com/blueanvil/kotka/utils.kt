@@ -42,3 +42,9 @@ fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? 
     }
     return null
 }
+
+fun String.elipsis(maxLength: Int): String {
+    return if (maxLength > 0 && length > maxLength) {
+        "${substring(0, maxLength - 3)}..."
+    } else this
+}

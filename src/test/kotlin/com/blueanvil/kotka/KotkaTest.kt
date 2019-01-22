@@ -12,11 +12,12 @@ import kotlin.collections.ArrayList
 class KotkaTest {
 
     val kotka = Kotka(kafkaServers = "localhost:59099",
-            partitionCount = 64,
-            replicationFactor = 1,
-            consumerProps = mapOf("max.poll.records" to "1").toProperties(),
-            producerProps = mapOf("batch.size" to "1").toProperties(),
-            pollTimeout = Duration.ofMillis(100))
+            config = KotkaConfig(
+                    partitionCount = 64,
+                    replicationFactor = 1,
+                    consumerProps = mapOf("max.poll.records" to "1").toProperties(),
+                    producerProps = mapOf("batch.size" to "1").toProperties(),
+                    pollTimeout = Duration.ofMillis(100)))
 
 
     @Test

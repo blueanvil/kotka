@@ -1,13 +1,10 @@
 package com.blueanvil.kotka
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
-import java.time.Duration
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
@@ -22,10 +19,8 @@ class Consumer<T : Any>(private val kafkaServers: String,
                         private val topic: String,
                         private val threads: Int,
                         private val messageClass: KClass<T>,
-                        private val consumerProps: Properties? = null,
-                        private val objectMapper: ObjectMapper,
                         private val pubSub: Boolean = false,
-                        private val pollTimeout: Duration = Duration.ofMillis(500)) {
+                        private val config: KotkaConfig) {
 
     @Volatile
     private var stopped: Boolean = false
@@ -62,8 +57,8 @@ class Consumer<T : Any>(private val kafkaServers: String,
 
     private fun allProps(groupId: String): Properties {
         val allProps = Properties()
-        if (consumerProps != null) {
-            allProps.putAll(consumerProps)
+        if (config.consumerProps != null) {
+            allProps.putAll(config.consumerProps)
         }
         allProps[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = kafkaServers
         allProps[ConsumerConfig.GROUP_ID_CONFIG] = groupId
@@ -77,7 +72,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
     private fun runConsumer(kafkaConsumer: KafkaConsumer<String, String>, groupId: String, messageHandler: (T) -> Unit) {
         log.info("Running consumer for topic '$topic' and group ID '$groupId'")
         while (!stopped) {
-            val records = kafkaConsumer.poll(pollTimeout)
+            val records = kafkaConsumer.poll(config.pollTimeout)
             log.trace("($topic/$groupId) Received ${records.count()} messages after poll")
             processRecords(records, messageHandler)
         }
@@ -95,9 +90,9 @@ class Consumer<T : Any>(private val kafkaServers: String,
 
             val msgStr = record.value()
             try {
-                messageHandler(objectMapper.readValue(msgStr, messageClass.javaObjectType))
+                messageHandler(config.objectMapper.readValue(msgStr, messageClass.javaObjectType))
             } catch (t: Throwable) {
-                log.error("(topic) Error handling message : $msgStr", t)
+                config.logging.error(log, msgStr, t) { "($topic) Error handling message: $it" }
             }
         }
     }
