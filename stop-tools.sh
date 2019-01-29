@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-etc/tools/zookeeper.sh     stop
-etc/tools/kafka.sh         stop
+etc/bluebash/src/tools/zookeeper.sh stop etc/temp
+etc/bluebash/src/tools/kafka.sh stop etc/temp
