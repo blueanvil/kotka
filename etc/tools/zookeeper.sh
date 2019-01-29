@@ -39,6 +39,7 @@ startZookeeper() {
 
     tar xf $PACKAGE -C $TOOLDIR --strip-components=1
     mv $TOOLDIR/conf/zoo_sample.cfg $TOOLDIR/conf/zoo.cfg
+
     sed -i.bak "s/clientPort.*/clientPort=$ZOOPORT/" $TOOLDIR/conf/zoo.cfg
     sed -i.bak "s/dataDir.*//" $TOOLDIR/conf/zoo.cfg
     echo "dataDir=$TOOLDIR/zlogs" >> $TOOLDIR/conf/zoo.cfg
