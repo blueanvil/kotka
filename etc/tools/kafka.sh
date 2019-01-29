@@ -35,6 +35,7 @@ startKafka() {
     mkdir -p $TOOLDIR/klogs
 
     tar xf $PACKAGE -C $TOOLDIR --strip-components=1
+
     sed -i.bak "s/listeners.*/listeners=PLAINTEXT:\/\/:${KAFKA_PORT}/" $TOOLDIR/config/server.properties
     sed -i.bak "s/metadata.broker.list.*/metadata.broker.list=localhost:${KAFKA_PORT}/" $TOOLDIR/config/producer.properties
     sed -i.bak "s/zookeeper.connect=.*/zookeeper.connect=localhost:${ZOOPORT}/" $TOOLDIR/config/consumer.properties
