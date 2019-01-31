@@ -1,5 +1,5 @@
 group = 'com.blueanvil'
-version = '1.0.6'
+version = '1.0.7'
 
 buildscript {
     apply from: 'dependencies.gradle'
@@ -52,8 +52,8 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlinVersion"
 
     compile "org.slf4j:slf4j-api:$slf4jVersion"
-    compile "org.apache.kafka:kafka_2.12:$kafkaVersion"
-    compile "org.apache.kafka:kafka-clients:$kafkaVersion"
+    compileOnly "org.apache.kafka:kafka_2.12:$kafkaVersion"
+    compileOnly "org.apache.kafka:kafka-clients:$kafkaVersion"
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
 
     testCompile "junit:junit:$junitVersion"
