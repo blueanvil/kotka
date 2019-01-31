@@ -70,7 +70,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
     }
 
     private fun runConsumer(kafkaConsumer: KafkaConsumer<String, String>, groupId: String, messageHandler: (T) -> Unit) {
-        log.info("Running consumer for topic '$topic' and group ID '$groupId'")
+        log.info("Running consumer topic=$topic, threads=$threads, messageClass=${messageClass.simpleName}, pubSub=$pubSub, groupId=$groupId")
         while (!stopped) {
             val records = kafkaConsumer.poll(config.pollTimeout)
             log.trace("($topic/$groupId) Received ${records.count()} messages after poll")
