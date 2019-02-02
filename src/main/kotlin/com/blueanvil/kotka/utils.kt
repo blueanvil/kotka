@@ -8,7 +8,7 @@ import kotlin.reflect.full.allSuperclasses
 /**
  * @author Cosmin Marginean
  */
-fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition: () -> Boolean) {
+internal fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition: () -> Boolean) {
     var success: Boolean
     var startTime = System.nanoTime()
     while (true) {
@@ -24,11 +24,11 @@ fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition: () -> Bo
     }
 }
 
-fun uuid(): String {
+internal fun uuid(): String {
     return UUID.randomUUID().toString().toLowerCase().replace("-".toRegex(), "")
 }
 
-fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? {
+internal fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? {
     val annotation = cls.annotations.find { it.annotationClass == annotationClass }
     if (annotation != null) {
         return annotation as T
@@ -43,7 +43,7 @@ fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? 
     return null
 }
 
-fun String.elipsis(maxLength: Int): String {
+internal fun String.elipsis(maxLength: Int): String {
     return if (maxLength > 0 && length > maxLength) {
         "${substring(0, maxLength - 3)}..."
     } else this
