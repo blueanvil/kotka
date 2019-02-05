@@ -29,7 +29,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
         val threadCount = AtomicInteger(1)
         val threadPool = Executors.newFixedThreadPool(threads) { runnable ->
             val thread = Thread(Thread.currentThread().threadGroup, runnable, "kotka.$topic.${threadCount.getAndIncrement()}", 0)
-            thread.isDaemon = false
+            thread.isDaemon = true
             thread
         }
 
