@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.collections.ArrayList
 import kotlin.reflect.KClass
@@ -50,7 +51,8 @@ class Consumer<T : Any>(private val kafkaServers: String,
         Runtime.getRuntime().addShutdownHook(object : Thread() {
             override fun run() {
                 stopped = true
-                futures.forEach { it.get() }
+                threadPool.shutdown()
+                threadPool.awaitTermination(30, TimeUnit.SECONDS)
             }
         })
     }
