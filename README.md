@@ -1,4 +1,8 @@
 # Kotka
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![Build Status](https://travis-ci.com/blueanvil/kotka.svg?branch=master)](https://travis-ci.com/blueanvil/kotka)
+[![Coverage Status](https://coveralls.io/repos/github/blueanvil/kotka/badge.svg?branch=master)](https://coveralls.io/github/blueanvil/kotka?branch=master)
+
 Kotka is a thin Kotlin wrapper for Kafka with a simple and clean API, and only two dependencies: Jackson and Slf4J
 
 # Gradle
