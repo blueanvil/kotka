@@ -93,7 +93,7 @@ class KotkaTest {
 
         repeat(20) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
 
-        wait(15, 3000, "Consumer hasn't finished") { threads.size == 20 }
+        wait(60, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
             assertTrue(threads.contains("kotka.$topic.$i"))
         }
