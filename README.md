@@ -1,8 +1,7 @@
-# kotka
-A thin Kotlin wrapper for Kafka with a simple and clean API, and very few dependencies: Kafka, Jackson and Slf4J
+# Kotka
+Kotka is a thin Kotlin wrapper for Kafka with a simple and clean API, and only two dependencies: Jackson and Slf4J
 
-Code coverage: https://blueanvil.github.io/kotka/etc/code-coverage/test/html/index.html
-## Dependency
+# Gradle
 
 ```
 repositories {
@@ -61,3 +60,6 @@ kotka.consumer(AnnotatedMessagePubSub::class) { message ->
     //process message
 }
 ```
+
+# License Information
+* The code is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
