@@ -1,7 +1,10 @@
 package com.blueanvil.kotka
 
-import org.junit.Assert
-import org.junit.Test
+import org.testcontainers.containers.KafkaContainer
+import org.testng.Assert.assertTrue
+import org.testng.annotations.AfterSuite
+import org.testng.annotations.BeforeSuite
+import org.testng.annotations.Test
 import java.time.Duration
 import java.util.*
 import kotlin.collections.ArrayList
@@ -11,14 +14,27 @@ import kotlin.collections.ArrayList
  */
 class KotkaTest {
 
-    val kotka = Kotka(kafkaServers = "localhost:59099",
-            config = KotkaConfig(
-                    partitionCount = 64,
-                    replicationFactor = 1,
-                    consumerProps = mapOf("max.poll.records" to "1").toProperties(),
-                    producerProps = mapOf("batch.size" to "1").toProperties(),
-                    pollTimeout = Duration.ofMillis(100)))
+    companion object {
+        var kafkaContainer: KafkaContainer = KafkaContainer()
+        lateinit var kotka: Kotka
+    }
 
+    @BeforeSuite
+    fun beforeTests() {
+        kafkaContainer.start()
+        kotka = Kotka(kafkaServers = kafkaContainer.bootstrapServers,
+                config = KotkaConfig(
+                        partitionCount = 64,
+                        replicationFactor = 1,
+                        consumerProps = mapOf("max.poll.records" to "1").toProperties(),
+                        producerProps = mapOf("batch.size" to "1").toProperties(),
+                        pollTimeout = Duration.ofMillis(100)))
+    }
+
+    @AfterSuite
+    fun afterTests() {
+        kafkaContainer.close()
+    }
 
     @Test
     fun simpleSendAndConsumer() {
@@ -33,7 +49,7 @@ class KotkaTest {
 
         wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
         val first = messages.first()
-        Assert.assertTrue(
+        assertTrue(
                 first.name == "Jackie Chan"
                         && first.age == 55
                         && first.aliases.contains("The Dragon")
@@ -51,16 +67,16 @@ class KotkaTest {
         kotka.send(AnnotatedMessage("Dolph Lundgren"))
 
         wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
-        Assert.assertTrue(messages[0].name == "Dolph Lundgren")
+        assertTrue(messages[0].name == "Dolph Lundgren")
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test(expectedExceptions = [IllegalArgumentException::class])
     fun expectConsumerError() {
         kotka.consumer(Message::class) {
         }
     }
 
-    @Test(expected = IllegalArgumentException::class)
+    @Test(expectedExceptions = [IllegalArgumentException::class])
     fun expectProducerError() {
         kotka.send(Message("Dolph Lundgren", 1, listOf("none")))
     }
@@ -79,7 +95,7 @@ class KotkaTest {
 
         wait(15, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
-            Assert.assertTrue(threads.contains("kotka.$topic.$i"))
+            assertTrue(threads.contains("kotka.$topic.$i"))
         }
     }
 
@@ -96,7 +112,7 @@ class KotkaTest {
 
         wait(15, 500, "Consumer hasn't finished") { threads.size == 20 }
         for (i in 1..4) {
-            Assert.assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
+            assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
         }
     }
 
