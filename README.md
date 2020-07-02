@@ -1,4 +1,4 @@
-# kotka
+# Kotka
 Kotka is a thin Kotlin wrapper for Kafka with a simple and clean API, and only two dependencies: Jackson and Slf4J
 
 # Gradle
@@ -60,3 +60,6 @@ kotka.consumer(AnnotatedMessagePubSub::class) { message ->
     //process message
 }
 ```
+
+# License Information
+* The code is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
