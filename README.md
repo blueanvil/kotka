@@ -48,14 +48,14 @@ different kinds of reports for different requirements. Also, we want to be able 
 report generation as a single setting.
 
 ```
- kotka.consumer(topic, 2, GenerateExcel::class) { excelCount.incrementAndGet() }
- kotka.consumer(topic, 4, PngToPdf::class) { pngToPdfCount.incrementAndGet() }
+kotka.consumer(topic, 2, GenerateExcel::class) { excelCount.incrementAndGet() }
+kotka.consumer(topic, 4, PngToPdf::class) { pngToPdfCount.incrementAndGet() }
 
- kotka.send(topic, GenerateExcel())
- kotka.send(topic, PngToPdf())
- kotka.send(topic, PngToPdf())
- kotka.send(topic, GenerateExcel())
- kotka.send(topic, PngToPdf())
+kotka.send(topic, GenerateExcel())
+kotka.send(topic, PngToPdf())
+kotka.send(topic, PngToPdf())
+kotka.send(topic, GenerateExcel())
+kotka.send(topic, PngToPdf())
 ```
 
 # License Information
