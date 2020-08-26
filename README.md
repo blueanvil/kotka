@@ -41,10 +41,22 @@ kotka.consumer(topic = topic, threads = 4, messageClass = Message::class, pubSub
 
 ## Multiple consumers on the same topic (since 1.1)
 Kotka allows wiring multiple consumers on the same topic. This is useful when the same topic must be used
-for a series of operations which have similar scope, but different purposes.
-For example, we might want to have a topic that handles the generation of PDF reports, but we want to have
-different kinds of reports generated on the topics. Also, we want to be able to configure the capacity (number of threads) for
+for a series of operations which have similar scope, but different implementations.
+
+For example, we might need a topic that handles the generation of reports, but we want to have
+different kinds of reports for different requirements. Also, we want to be able to configure the capacity (number of threads) for
 report generation as a single setting.
+
+```
+ kotka.consumer(topic, 2, GenerateExcel::class) { excelCount.incrementAndGet() }
+ kotka.consumer(topic, 4, PngToPdf::class) { pngToPdfCount.incrementAndGet() }
+
+ kotka.send(topic, GenerateExcel())
+ kotka.send(topic, PngToPdf())
+ kotka.send(topic, PngToPdf())
+ kotka.send(topic, GenerateExcel())
+ kotka.send(topic, PngToPdf())
+```
 
 # License Information
 The code is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
