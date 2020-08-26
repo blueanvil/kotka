@@ -8,7 +8,7 @@ import kotlin.reflect.full.allSuperclasses
 /**
  * @author Cosmin Marginean
  */
-internal fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition: () -> Boolean) {
+internal fun wait(seconds: Long, sleepMs: Long, failureMessage: String? = null, condition: () -> Boolean) {
     var success: Boolean
     var startTime = System.nanoTime()
     while (true) {
@@ -20,13 +20,11 @@ internal fun wait(seconds: Long, sleepMs: Long, errorMessage: String, condition:
         Thread.sleep(sleepMs)
     }
     if (!success) {
-        throw RuntimeException(errorMessage)
+        throw RuntimeException(failureMessage ?: "Error waiting $seconds seconds for operation to finish")
     }
 }
 
-internal fun uuid(): String {
-    return UUID.randomUUID().toString().toLowerCase().replace("-".toRegex(), "")
-}
+internal fun uuid(): String = UUID.randomUUID().toString().toLowerCase().replace("-", "")
 
 internal fun <T : Annotation> annotation(cls: KClass<*>, annotationClass: KClass<T>): T? {
     val annotation = cls.annotations.find { it.annotationClass == annotationClass }

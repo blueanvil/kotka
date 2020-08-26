@@ -32,38 +32,19 @@ kotka.consumer(topic = "topic1", threads = 8, messageClass = Message::class) { m
 kotka.send(topic = topic, message = Message(...)))
 ```
 
-## Using `@KotkaMessage`
-```kotlin
-// Annotated class where topic and thread count can be specified
-@KotkaMessage(topic = "test-annotated-message", threads = 8)
-data class AnnotatedMessage(val name: String)
-
-
-// Consumer only requires an instance of a message annotated with @KotkaMessage
-kotka.consumer(AnnotatedMessage::class) { message ->
-     // process message
-}
-
-// Similarly, sending a message won't require a topic as it's being read from @KotkaMessage.topic
-kotka.send(AnnotatedMessage("..."))
-```
-
 ## Pub-Sub Consumer
 ```kotlin
 kotka.consumer(topic = topic, threads = 4, messageClass = Message::class, pubSub = true) { message ->
     // process message
 }
 ```
-or, if using `@KotkaMessage`:
-```kotlin
-@KotkaMessage(topic = "test-annotated-pubsub-message", threads = 4, pubSub = true)
-data class AnnotatedMessagePubSub(val name: String)
 
-
-kotka.consumer(AnnotatedMessagePubSub::class) { message ->
-    //process message
-}
-```
+## Multiple consumers on the same topic (since 1.1)
+Kotka allows wiring multiple consumers on the same topic. This is useful when the same topic must be used
+for a series of operations which have similar scope, but different purposes.
+For example, we might want to have a topic that handles the generation of PDF reports, but we want to have
+different kinds of reports generated on the topics. Also, we want to be able to configure the capacity (number of threads) for
+report generation as a single setting.
 
 # License Information
 The code is licensed under [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).

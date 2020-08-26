@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
@@ -16,17 +17,18 @@ import kotlin.reflect.KClass
 /**
  * @author Cosmin Marginean
  */
-class Consumer<T : Any>(private val kafkaServers: String,
-                        private val topic: String,
-                        private val threads: Int,
-                        private val messageClass: KClass<T>,
-                        private val pubSub: Boolean = false,
-                        private val config: KotkaConfig) {
+class Consumer(private val kafkaServers: String,
+               private val topic: String,
+               private val threads: Int,
+               private val pubSub: Boolean = false,
+               private val config: KotkaConfig) {
+
+    private val handlers = ConcurrentHashMap<String, MessageHandler<*>>()
 
     @Volatile
     private var stopped: Boolean = false
 
-    fun run(messageHandler: (T) -> Unit) {
+    init {
         val threadCount = AtomicInteger(1)
         val threadPool = Executors.newFixedThreadPool(threads) { runnable ->
             val thread = Thread(Thread.currentThread().threadGroup, runnable, "kotka.$topic.${threadCount.getAndIncrement()}", 0)
@@ -43,7 +45,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
             val kafkaConsumer = KafkaConsumer<String, String>(allProps)
             kafkaConsumer.subscribe(listOf(topic))
             val future = threadPool.submit {
-                runConsumer(kafkaConsumer, groupId, messageHandler)
+                runConsumer(kafkaConsumer, groupId)
             }
             futures.add(future)
         }
@@ -55,6 +57,10 @@ class Consumer<T : Any>(private val kafkaServers: String,
                 threadPool.awaitTermination(30, TimeUnit.SECONDS)
             }
         })
+    }
+
+    fun <T : Any> addHandler(messageClass: KClass<T>, handlerFunction: (T) -> Unit) {
+        handlers[messageClass.qualifiedName!!] = MessageHandler(messageClass, handlerFunction)
     }
 
     private fun allProps(groupId: String): Properties {
@@ -71,12 +77,12 @@ class Consumer<T : Any>(private val kafkaServers: String,
         return allProps
     }
 
-    private fun runConsumer(kafkaConsumer: KafkaConsumer<String, String>, groupId: String, messageHandler: (T) -> Unit) {
-        log.info("Running consumer topic=$topic, threads=$threads, messageClass=${messageClass.simpleName}, pubSub=$pubSub, groupId=$groupId")
+    private fun runConsumer(kafkaConsumer: KafkaConsumer<String, String>, groupId: String) {
+        log.info("Running consumer topic=$topic, threads=$threads, pubSub=$pubSub, groupId=$groupId")
         while (!stopped) {
             val records = kafkaConsumer.poll(config.pollTimeout)
             log.trace("($topic/$groupId) Received ${records.count()} messages after poll")
-            processRecords(records, messageHandler)
+            processRecords(records)
         }
 
         kafkaConsumer.unsubscribe()
@@ -84,7 +90,7 @@ class Consumer<T : Any>(private val kafkaServers: String,
         log.info("Stopped consumer for topic $topic and group $groupId")
     }
 
-    private fun processRecords(records: ConsumerRecords<String, String>, messageHandler: (T) -> Unit) {
+    private fun processRecords(records: ConsumerRecords<String, String>) {
         for (record in records) {
             if (stopped) {
                 break
@@ -92,7 +98,9 @@ class Consumer<T : Any>(private val kafkaServers: String,
 
             val msgStr = record.value()
             try {
-                messageHandler(config.objectMapper.readValue(msgStr, messageClass.javaObjectType))
+                val split = msgStr.split("|")
+                val handlerInfo = handlers[split[0]]!!
+                handlerInfo.invoke(config, split[1])
             } catch (t: Throwable) {
                 config.logging.error(log, msgStr, t) { "($topic) Error handling message: $it" }
             }
@@ -101,5 +109,14 @@ class Consumer<T : Any>(private val kafkaServers: String,
 
     companion object {
         private val log = LoggerFactory.getLogger(Consumer::class.java)
+    }
+}
+
+data class MessageHandler<T : Any>(val messageClass: KClass<T>,
+                                   val handlerFunction: (T) -> Unit) {
+
+    fun invoke(config: KotkaConfig, messageStr: String) {
+        val message = config.objectMapper.readValue(messageStr, messageClass.javaObjectType)
+        handlerFunction(message)
     }
 }

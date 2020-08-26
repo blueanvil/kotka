@@ -7,6 +7,7 @@ import org.testng.annotations.BeforeSuite
 import org.testng.annotations.Test
 import java.time.Duration
 import java.util.*
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.collections.ArrayList
 
 /**
@@ -38,14 +39,14 @@ class KotkaTest {
 
     @Test
     fun simpleSendAndConsumer() {
-        val messages = Collections.synchronizedList(ArrayList<Message>())
+        val messages = Collections.synchronizedList(ArrayList<TestMessage>())
         val topic = uuid()
 
-        kotka.consumer(topic = topic, threads = 1, messageClass = Message::class) { message ->
+        kotka.consumer(topic = topic, threads = 1, messageClass = TestMessage::class) { message ->
             messages.add(message)
         }
 
-        kotka.send(topic = topic, message = Message("Jackie Chan", 55, listOf("The Dragon", "Jack E Chan")))
+        kotka.send(topic = topic, message = TestMessage("Jackie Chan", 55, listOf("The Dragon", "Jack E Chan")))
 
         wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
         val first = messages.first()
@@ -57,87 +58,52 @@ class KotkaTest {
     }
 
     @Test
-    fun annotatedMessage() {
-        val messages = Collections.synchronizedList(ArrayList<AnnotatedMessage>())
-
-        kotka.consumer(AnnotatedMessage::class) { message ->
-            messages.add(message)
-        }
-
-        kotka.send(AnnotatedMessage("Dolph Lundgren"))
-
-        wait(15, 500, "Consumer hasn't finished") { messages.size == 1 }
-        assertTrue(messages[0].name == "Dolph Lundgren")
-    }
-
-    @Test(expectedExceptions = [IllegalArgumentException::class])
-    fun expectConsumerError() {
-        kotka.consumer(Message::class) {
-        }
-    }
-
-    @Test(expectedExceptions = [IllegalArgumentException::class])
-    fun expectProducerError() {
-        kotka.send(Message("Dolph Lundgren", 1, listOf("none")))
-    }
-
-    @Test
     fun parallelism() {
         val threads = Collections.synchronizedList(ArrayList<String>())
         val topic = uuid()
 
-        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class) {
+        kotka.consumer(topic = topic, threads = 4, messageClass = TestMessage::class) {
             threads.add(Thread.currentThread().name)
             Thread.sleep(3000)
         }
 
-        repeat(20) { kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy"))) }
+        repeat(20) { kotka.send(topic = topic, message = TestMessage("Peter Griffin", 55, listOf("The Family Guy"))) }
 
-        wait(60, 500, "Consumer hasn't finished") { threads.size == 20 }
+        wait(60, 500) { threads.size == 20 }
         for (i in 1..4) {
             assertTrue(threads.contains("kotka.$topic.$i"))
         }
     }
 
     @Test
-    fun annotatedParallelism() {
-        val threads = Collections.synchronizedList(ArrayList<String>())
-
-        kotka.consumer(AnnotatedMessageParallel::class) {
-            threads.add(Thread.currentThread().name)
-            Thread.sleep(500)
-        }
-
-        repeat(20) { kotka.send(AnnotatedMessageParallel("Change the conversation")) }
-
-        wait(15, 500, "Consumer hasn't finished") { threads.size == 20 }
-        for (i in 1..4) {
-            assertTrue(threads.contains("kotka.test-annotated-parallel-message.$i"))
-        }
-    }
-
-    @Test
     fun pubSub() {
-        val messages = Collections.synchronizedList(ArrayList<Message>())
+        val messages = Collections.synchronizedList(ArrayList<TestMessage>())
         val topic = uuid()
 
-        kotka.consumer(topic = topic, threads = 4, messageClass = Message::class, pubSub = true) { message ->
+        kotka.consumer(topic = topic, threads = 4, messageClass = TestMessage::class, pubSub = true) { message ->
             messages.add(message)
         }
 
-        kotka.send(topic = topic, message = Message("Peter Griffin", 55, listOf("The Family Guy")))
+        kotka.send(topic = topic, message = TestMessage("Peter Griffin", 55, listOf("The Family Guy")))
         wait(15, 500, "Consumer hasn't finished") { messages.size == 4 }
     }
 
     @Test
-    fun annotatedPubSub() {
-        val messages = Collections.synchronizedList(ArrayList<AnnotatedMessagePubSub>())
+    fun multipleConsumersOnSameTopic() {
+        val excelCount = AtomicLong(0)
+        val pngToPdfCount = AtomicLong(0)
+        val topic = "multipleConsumers-${UUID.randomUUID()}"
 
-        kotka.consumer(AnnotatedMessagePubSub::class) { message ->
-            messages.add(message)
-        }
+        kotka.consumer(topic, 2, GenerateExcel::class) { excelCount.incrementAndGet() }
+        kotka.consumer(topic, 4, PngToPdf::class) { pngToPdfCount.incrementAndGet() }
 
-        kotka.send(AnnotatedMessagePubSub("Sunshine"))
-        wait(15, 500, "Consumer hasn't finished") { messages.size == 4 }
+        kotka.send(topic, GenerateExcel())
+        kotka.send(topic, PngToPdf())
+        kotka.send(topic, PngToPdf())
+        kotka.send(topic, GenerateExcel())
+        kotka.send(topic, PngToPdf())
+
+        wait(10, 100) { excelCount.get() == 2L && pngToPdfCount.get() == 3L }
     }
+
 }

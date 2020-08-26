@@ -4,6 +4,7 @@ import org.apache.kafka.clients.admin.AdminClient
 import org.apache.kafka.clients.admin.NewTopic
 import org.slf4j.LoggerFactory
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 /**
@@ -13,22 +14,7 @@ class Kotka(private val kafkaServers: String,
             private val config: KotkaConfig) {
 
     private val producer = Producer(kafkaServers, config.objectMapper, config.producerProps)
-
-    fun <T : Any> send(message: T) {
-        val annotation = annotation(message::class)
-        producer.send(annotation.topic, message)
-    }
-
-    fun <T : Any> consumer(messageClass: KClass<T>, messageHandler: (T) -> Unit) {
-        val annotation = annotation(messageClass)
-        consumer(annotation.topic, annotation.threads, messageClass, annotation.pubSub, messageHandler)
-    }
-
-    private fun <T : Any> annotation(messageClass: KClass<T>): KotkaMessage {
-        val annotation = annotation(messageClass, KotkaMessage::class)
-                ?: throw IllegalArgumentException("Message class $messageClass::class is not annotated with ${KotkaMessage::class}")
-        return annotation
-    }
+    private val consumers = ConcurrentHashMap<String, Consumer>()
 
     fun <T : Any> send(topic: String, message: T) {
         producer.send(topic, message)
@@ -40,12 +26,14 @@ class Kotka(private val kafkaServers: String,
                            pubSub: Boolean = false,
                            messageHandler: (T) -> Unit) {
         createTopic(topic)
-        Consumer(kafkaServers = kafkaServers,
-                topic = topic,
-                threads = threads,
-                messageClass = messageClass,
-                pubSub = pubSub,
-                config = config).run(messageHandler)
+        val consumer = consumers.getOrPut(topic) {
+            Consumer(kafkaServers = kafkaServers,
+                    topic = topic,
+                    threads = threads,
+                    pubSub = pubSub,
+                    config = config)
+        }
+        consumer.addHandler(messageClass, messageHandler)
     }
 
     fun createTopic(topic: String) {

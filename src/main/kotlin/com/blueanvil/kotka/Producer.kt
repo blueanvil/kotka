@@ -32,6 +32,6 @@ class Producer(kafkaServers: String,
 
     fun send(topic: String, message: Any) {
         val msgString = objectMapper.writeValueAsString(message)
-        producer.send(ProducerRecord<String, String>(topic, uuid(), msgString))
+        producer.send(ProducerRecord<String, String>(topic, uuid(), "${message::class.qualifiedName}|$msgString"))
     }
 }
