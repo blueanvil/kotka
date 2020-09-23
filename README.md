@@ -44,8 +44,7 @@ Kotka allows wiring multiple consumers on the same topic. This is useful when th
 for a series of operations which have similar scope, but different implementations.
 
 For example, we might need a topic that handles the generation of reports, but we want to have
-different kinds of reports for different requirements. Also, we want to be able to configure the capacity (number of threads) for
-report generation as a single setting.
+different kinds of reports for different requirements.
 
 ```
 kotka.consumer(topic, 2, GenerateExcel::class) { ... }
