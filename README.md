@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    compile 'com.github.blueanvil:kotka:1.1'
+    compile 'com.github.blueanvil:kotka:1.2'
 }
 ```
 

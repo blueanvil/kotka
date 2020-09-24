@@ -98,9 +98,10 @@ class Consumer(private val kafkaServers: String,
 
             val msgStr = record.value()
             try {
-                val split = msgStr.split("|")
-                val handlerInfo = handlers[split[0]]!!
-                handlerInfo.invoke(config, split[1])
+                val firstPipe = msgStr.indexOf('|')
+                val handlerName = msgStr.substring(0, firstPipe)
+                val handlerInfo = handlers[handlerName]!!
+                handlerInfo.invoke(config, msgStr.substring(firstPipe + 1))
             } catch (t: Throwable) {
                 config.logging.error(log, msgStr, t) { "($topic) Error handling message: $it" }
             }
